@@ -114,3 +114,73 @@ class UserLogin (APIView):
             return Response ('Logged in successfully', status.HTTP_200_OK)
         else:
             return Response ('Invalid credentials', status.HTTP_400_BAD_REQUEST)
+        
+#users view serailizer
+@login_required (login_url = 'api_login')
+class ViewUsers (APIView):
+    def get (self, request):
+        users = UserAccount.objects.all().values(exclude=['password'])
+        serializer = UserAccountSerializer (users, many=True)
+        return Response (serializer.data, status.HTTP_200_OK)
+
+#user create serailizer
+@login_required (login_url = 'api_login')
+class UserCreate (APIView):
+    def post (self, request):
+        serializer = UserAccountSerializer (data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response (serializer.data, status.HTTP_201_CREATED)
+        return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
+
+#list create serializer
+class ListCreate (APIView):
+    def post (self, request):
+        serializer = TodoSerializer (data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response (serializer.data, status.HTTP_201_CREATED)
+        return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
+
+#list view serailizer
+@login_required (login_url = 'api_login')
+class ViewList (APIView):
+    def get (self, request):
+        users = Todo.objects.all()
+        serializer = TodoSerializer (users, many=True)
+        return Response (serializer.data, status.HTTP_200_OK)
+
+#update list serializer
+@login_required (login_url = 'api_login')
+class UpdateList (APIView):  
+    def post (self, request, id):
+        try:
+            list = Todo.objects.get(pk = id)
+        except Todo.DoesNotExist:
+            return Response(status.HTTP_404_NOT_FOUND)
+        
+        serializer = TodoSerializer (list, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+    def get (self, request, id):
+        try:
+            list = Todo.objects.get(pk = id)
+        except Todo.DoesNotExist:
+            return Response(status.HTTP_404_NOT_FOUND)
+        
+        serializer = TodoSerializer(list)
+        return Response(serializer.data)
+
+#delete list serializer
+@login_required (login_url = 'api_login')
+class DeleteList (APIView):
+    def post (self, request, id):
+        try:
+            list = Todo.objects.get (pk = id)
+        except Todo.DoesNotExist:
+            return Response (status.HTTP_404_NOT_FOUND)
+        list.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
