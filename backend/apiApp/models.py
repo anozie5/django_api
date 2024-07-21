@@ -12,6 +12,7 @@ class Todo (models.Model):
     about = models.ForeignKey(UserAccount, on_delete = models.CASCADE)
     job = models.TextField ()
     created_on = models.DateTimeField (auto_now_add = True)
+    updated_on = models.DateTimeField (auto_now = True)
     def __str__(self):
         return self.about
 

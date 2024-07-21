@@ -8,7 +8,7 @@ from apiApp.models import *
 from apiApp.forms import *
 from apiApp.serializer import *
 from django.contrib.auth.decorators import login_required
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views import View
 from rest_framework.authtoken.models import Token
 
 # Create your views here.
@@ -26,58 +26,69 @@ def home (request):
 def createUser (request):
     form = CreateUser
     if request.method == 'POST':
-        form = CreateUser(request.post)
+        form = CreateUser(request.POST)
         if form.is_valid():
             form.save()
             return redirect ('login')
-    form = CreateUser
     return render (request, 'registration/sign_up.html', {'form': form})
 
 #log_in view
 def login (request):
     form = Login
     if request.method == 'POST':
-        form = Login(request.post)
+        form = Login(request.POST)
         if form.is_valid():
             return redirect ('home')
-    form = Login
     return render (request, 'registration/log_in.html', {'form': form})
 
 #creating list
 @login_required (login_url= 'login')
-class CreateList (CreateView):
-    form_class = Post
-    context_object_name = 'form'
-    template_name = 'apiApp/write_list.html'
-    success_url = 'list'
+class CreateList (View):
+    form = Need
+    def post (self, request):
+        form = Need (request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect ('list')
+    
+    def get (self, request):
+        form = Need
+        return render (request, 'apiApp/write_list.html', {'form' : form})
 
 #viewing list
 @login_required (login_url= 'login')
-class View (ListView):
-    model = Todo
-    context_object_name = 'list'
-    template_name = 'apiApp/list.html'
+class View (View):
+    def get (self, request):
+        list = Todo.objects.all()
+        return render (request, 'apiApp/list.html', {'lists': list})
 
 #updating view
 @login_required (login_url= 'login')
-class Update (UpdateView):
-    model = Todo
-    form_class = Post
-    success_url = 'list'
-    template_name = 'apiApp/write_list.html'
-    query_pk_and_slug = True
-    pk_url_kwarg = 'id'
-    queryset = Todo.objects.get(id)
+class Update(View):
+    def post(self, request, pk):
+        list = Todo.objects.get(pk=pk)
+        form = Need(request.POST, instance=list)
+        if form.is_valid():
+            form.save()
+            return redirect('list')
+
+    def get(self, request, pk):
+        list = Todo.objects.get(pk=pk)
+        form = Need(instance=list)
+        return render(request, 'apiApp/write_list.html', {'form': form})
 
 #deleting view
 @login_required (login_url= 'login')
-class Delete (DeleteView):
-    model = Todo
-    query_pk_and_slug = True
-    pk_url_kwarg = 'id'
-    queryset = Todo.objects.get(id)
-    success_url = 'list'
-    template_name = 'apiApp/confirm_delete.html'
+class Delete (View):
+    def post (self, request, pk):
+        list = Todo.objects.get (pk = pk)
+        list.delete()
+        return redirect ('list')
+    
+    def get (self, request, pk):
+        list = Todo.objects.get (pk = pk)
+        return render (request, 'apiApp/confirm_delete.html', {'list': list})
+
 
 #now for serializers
 #user creation serializer
@@ -90,7 +101,7 @@ class UserCreate (APIView):
         email = request.data.get ('email')
 
         if not first_name or not last_name or not username or not password or not email:
-            return Response ('Please provide all required fields', status.HTTP_400_BAD_REQUEST)
+            return Response ('Please provpke all required fields', status.HTTP_400_BAD_REQUEST)
 
         user = CreateUser.objects.create_user (first_name = first_name, last_name = last_name, username = username, password = make_password(password), email = email)
         user.save()
@@ -105,7 +116,7 @@ class UserLogin (APIView):
         password = request.data.get ('password')
 
         if not username or not password:
-            return Response ('Please provide all required fields', status.HTTP_400_BAD_REQUEST)
+            return Response ('Please provpke all required fields', status.HTTP_400_BAD_REQUEST)
 
         user = authenticate (username = username, password = password)
 
@@ -116,7 +127,7 @@ class UserLogin (APIView):
             return Response ('Invalid credentials', status.HTTP_400_BAD_REQUEST)
         
 #users view serailizer
-@login_required (login_url = 'api_login')
+@login_required (login_url= 'api_login')
 class ViewUsers (APIView):
     def get (self, request):
         users = UserAccount.objects.all().values(exclude=['password'])
@@ -124,7 +135,7 @@ class ViewUsers (APIView):
         return Response (serializer.data, status.HTTP_200_OK)
 
 #user create serailizer
-@login_required (login_url = 'api_login')
+@login_required (login_url= 'api_login')
 class UserCreate (APIView):
     def post (self, request):
         serializer = UserAccountSerializer (data=request.data)
@@ -134,6 +145,7 @@ class UserCreate (APIView):
         return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
 
 #list create serializer
+@login_required (login_url= 'api_login')
 class ListCreate (APIView):
     def post (self, request):
         serializer = TodoSerializer (data=request.data)
@@ -143,19 +155,19 @@ class ListCreate (APIView):
         return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
 
 #list view serailizer
-@login_required (login_url = 'api_login')
+@login_required (login_url= 'api_login')
 class ViewList (APIView):
     def get (self, request):
-        users = Todo.objects.all()
-        serializer = TodoSerializer (users, many=True)
+        list = Todo.objects.all()
+        serializer = TodoSerializer (list, many=True)
         return Response (serializer.data, status.HTTP_200_OK)
 
 #update list serializer
-@login_required (login_url = 'api_login')
+@login_required (login_url= 'api_login')
 class UpdateList (APIView):  
-    def post (self, request, id):
+    def post (self, request, pk):
         try:
-            list = Todo.objects.get(pk = id)
+            list = Todo.objects.get(pk = pk)
         except Todo.DoesNotExist:
             return Response(status.HTTP_404_NOT_FOUND)
         
@@ -165,9 +177,9 @@ class UpdateList (APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
-    def get (self, request, id):
+    def get (self, request, pk):
         try:
-            list = Todo.objects.get(pk = id)
+            list = Todo.objects.get(pk = pk)
         except Todo.DoesNotExist:
             return Response(status.HTTP_404_NOT_FOUND)
         
@@ -175,11 +187,11 @@ class UpdateList (APIView):
         return Response(serializer.data)
 
 #delete list serializer
-@login_required (login_url = 'api_login')
+@login_required (login_url= 'api_login')
 class DeleteList (APIView):
-    def post (self, request, id):
+    def post (self, request, pk):
         try:
-            list = Todo.objects.get (pk = id)
+            list = Todo.objects.get (pk = pk)
         except Todo.DoesNotExist:
             return Response (status.HTTP_404_NOT_FOUND)
         list.delete()

@@ -16,7 +16,7 @@ class Login (AuthenticationForm):
         fields = ('username', 'password')
 
 #for the todo list
-class Post (forms.ModelForm):
+class Need (forms.ModelForm):
     class Meta:
         model = Todo
         fields = '__all__'
