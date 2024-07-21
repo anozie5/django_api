@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from rest_framework.response import Response
 from apiApp.models import *
 from apiApp.forms import *
-from django.contrib.auth.decorators import login_required, permission_required
+from apiApp.serializer import *
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 # Create your views here.
