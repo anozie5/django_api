@@ -7,16 +7,16 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 class CreateUser (UserCreationForm):
     class Meta:
         model = UserAccount
-        field = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
+        fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2')
 
 #for logging in
 class Login (AuthenticationForm):
     class Meta:
         model = UserAccount
-        field = ('username', 'password')
+        fields = ('username', 'password')
 
 #for the todo list
 class Post (forms.ModelForm):
     class Meta:
         model = Todo
-        field = '__all__'
+        fields = '__all__'

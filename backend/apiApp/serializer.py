@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from apiApp.models import *
+from apiApp.forms import *
 
 #creating serializer
 #serializer for users
@@ -13,3 +14,4 @@ class TodoSerializer (serializers.ModelSerializer):
     class Meta:
         model = Todo
         fields = '__all__'
+
