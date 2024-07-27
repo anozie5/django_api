@@ -64,30 +64,25 @@ class View (View):
 
 #updating view
 @login_required (login_url= 'login')
-class Update(View):
-    def post(self, request, pk):
-        list = Todo.objects.get(pk=pk)
-        form = Need(request.POST, instance=list)
-        if form.is_valid():
-            form.save()
-            return redirect('list')
-
-    def get(self, request, pk):
-        list = Todo.objects.get(pk=pk)
-        form = Need(instance=list)
+def update (request, pk):
+        list = Todo.objects.get(pk = pk)
+        form = Need(request.POST, list)
+        if request.method == 'POST':
+            if form.is_valid():
+                form.save()
+                return redirect('list')
+        form = Need(list)
         return render(request, 'apiApp/write_list.html', {'form': form})
 
 #deleting view
 @login_required (login_url= 'login')
-class Delete (View):
-    def post (self, request, pk):
-        list = Todo.objects.get (pk = pk)
+def delete (request, pk):
+    list = Todo.objects.get (pk = pk)
+    if request.method == 'POST':
         list.delete()
         return redirect ('list')
-    
-    def get (self, request, pk):
-        list = Todo.objects.get (pk = pk)
-        return render (request, 'apiApp/confirm_delete.html', {'list': list})
+    list = Todo.objects.get (pk = pk)
+    return render (request, 'apiApp/confirm_delete.html', {'list': list})
 
 
 #now for serializers
@@ -101,7 +96,7 @@ class UserCreate (APIView):
         email = request.data.get ('email')
 
         if not first_name or not last_name or not username or not password or not email:
-            return Response ('Please provpke all required fields', status.HTTP_400_BAD_REQUEST)
+            return Response ('Please provide all required fields', status.HTTP_400_BAD_REQUEST)
 
         user = CreateUser.objects.create_user (first_name = first_name, last_name = last_name, username = username, password = make_password(password), email = email)
         user.save()
@@ -116,7 +111,7 @@ class UserLogin (APIView):
         password = request.data.get ('password')
 
         if not username or not password:
-            return Response ('Please provpke all required fields', status.HTTP_400_BAD_REQUEST)
+            return Response ('Please provide all required fields', status.HTTP_400_BAD_REQUEST)
 
         user = authenticate (username = username, password = password)
 
@@ -135,14 +130,14 @@ class ViewUsers (APIView):
         return Response (serializer.data, status.HTTP_200_OK)
 
 #user create serailizer
-@login_required (login_url= 'api_login')
-class UserCreate (APIView):
-    def post (self, request):
-        serializer = UserAccountSerializer (data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response (serializer.data, status.HTTP_201_CREATED)
-        return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
+# @login_required (login_url= 'api_login')
+# class UserCreate (APIView):
+#     def post (self, request):
+#         serializer = UserAccountSerializer (data=request.data)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response (serializer.data, status.HTTP_201_CREATED)
+#         return Response ('Invalid inputs', status.HTTP_400_BAD_REQUEST)
 
 #list create serializer
 @login_required (login_url= 'api_login')

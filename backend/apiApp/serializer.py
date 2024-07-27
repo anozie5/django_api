@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from apiApp.models import *
-from apiApp.forms import *
 
 #creating serializer
 #serializer for users
